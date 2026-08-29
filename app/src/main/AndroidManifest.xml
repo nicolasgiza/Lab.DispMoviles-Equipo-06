@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ChatFamiliar">
         <activity
+            android:name=".RegisterScreen"
+            android:exported="false" />
+        <activity
             android:name=".LoginAcyivity"
             android:exported="false" />
         <activity
