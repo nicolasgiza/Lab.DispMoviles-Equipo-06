@@ -103,7 +103,7 @@ class LoginAcyivity : AppCompatActivity() {
                             finish()
 
                         } else {
-
+                            auth.signOut() // <-- Cierra la sesión activa no verificada
                             Toast.makeText(
                                 this,
                                 "Debes verificar tu correo electrónico antes de iniciar sesión",
