@@ -11,12 +11,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ChatFamiliar">
-        <activity
-            android:name=".RegisterScreen"
-            android:exported="false" />
+
         <activity
             android:name=".LoginAcyivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".RegisterActivity"
             android:exported="false" />

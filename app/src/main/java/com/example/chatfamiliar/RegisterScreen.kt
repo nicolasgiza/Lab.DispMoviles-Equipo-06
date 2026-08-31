@@ -122,12 +122,30 @@ fun RegisterScreen(
                     .addOnCompleteListener { task ->
                         isLoading = false
                         if (task.isSuccessful) {
-                            Toast.makeText(
-                                context,
-                                "Usuario registrado exitosamente",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            onRegisterSuccess()
+
+                            val user = auth.currentUser
+
+                            user?.sendEmailVerification()
+                                ?.addOnCompleteListener { verificationTask ->
+
+                                    if (verificationTask.isSuccessful) {
+
+                                        Toast.makeText(
+                                            context,
+                                            "Cuenta creada. Revisa tu correo para verificarla.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+
+                                        onRegisterSuccess()
+
+                                    } else {
+
+                                        errorMessage =
+                                            verificationTask.exception?.localizedMessage
+                                                ?: "No se pudo enviar el correo de verificación"
+                                    }
+                                }
+
                         } else {
                             errorMessage = task.exception?.localizedMessage ?: "Error al registrar usuario"
                         }
