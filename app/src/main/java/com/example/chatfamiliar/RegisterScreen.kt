@@ -1,4 +1,4 @@
-ackage com.example.chatfamiliar
+package com.example.chatfamiliar
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -40,7 +40,6 @@ fun RegisterScreen(
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Campo: Correo Electrónico
         OutlinedTextField(
             value = email,
             onValueChange = { email = it; errorMessage = null },
@@ -52,7 +51,6 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Campo: Contraseña
         OutlinedTextField(
             value = password,
             onValueChange = { password = it; errorMessage = null },
@@ -65,7 +63,6 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Actividad 2: Opción de confirmar contraseña
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it; errorMessage = null },
@@ -77,7 +74,6 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Mensaje de error visual si las contraseñas no coinciden o falta información
         errorMessage?.let { error ->
             Text(
                 text = error,
@@ -91,20 +87,17 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Actividad 1: Botón para crear usuario
         Button(
             onClick = {
                 val cleanEmail = email.trim()
                 val cleanPassword = password.trim()
                 val cleanConfirmPassword = confirmPassword.trim()
 
-                // Validaciones iniciales
                 if (cleanEmail.isEmpty() || cleanPassword.isEmpty() || cleanConfirmPassword.isEmpty()) {
                     errorMessage = "Por favor completa todos los campos"
                     return@Button
                 }
 
-                // Validación Actividad 2
                 if (cleanPassword != cleanConfirmPassword) {
                     errorMessage = "Las contraseñas no coinciden"
                     return@Button
@@ -117,13 +110,17 @@ fun RegisterScreen(
 
                 isLoading = true
 
-                // Validación e inserción en Firebase Authentication (Actividad 1)
                 auth.createUserWithEmailAndPassword(cleanEmail, cleanPassword)
                     .addOnCompleteListener { task ->
                         isLoading = false
                         if (task.isSuccessful) {
 
                             val user = auth.currentUser
+
+                            // Guardar rol predeterminado en Firestore (Actividad 6)
+                            user?.uid?.let { uid ->
+                                saveUserRole(uid = uid, email = cleanEmail, role = UserRole.USUARIO)
+                            }
 
                             user?.sendEmailVerification()
                                 ?.addOnCompleteListener { verificationTask ->
