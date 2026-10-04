@@ -66,5 +66,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("io.agora.rtc:full-sdk:4.3.0")
 
 }

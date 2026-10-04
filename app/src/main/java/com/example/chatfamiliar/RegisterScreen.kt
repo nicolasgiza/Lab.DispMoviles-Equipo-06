@@ -117,7 +117,7 @@ fun RegisterScreen(
 
                             val user = auth.currentUser
 
-                            // Guardar rol predeterminado en Firestore (Actividad 6)
+                            // (Actividad 6)
                             user?.uid?.let { uid ->
                                 saveUserRole(uid = uid, email = cleanEmail, role = UserRole.USUARIO)
                             }
