@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -35,7 +36,7 @@ fun RegisterScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Crear Cuenta",
+            text = stringResource(R.string.register_title),
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp)
         )
@@ -43,7 +44,7 @@ fun RegisterScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it; errorMessage = null },
-            label = { Text("Correo electrónico") },
+            label = { Text(stringResource(R.string.login_email)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
@@ -54,7 +55,7 @@ fun RegisterScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it; errorMessage = null },
-            label = { Text("Contraseña") },
+            label = { Text(stringResource(R.string.login_password)) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true,
@@ -66,7 +67,7 @@ fun RegisterScreen(
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it; errorMessage = null },
-            label = { Text("Confirmar contraseña") },
+            label = { Text(stringResource(R.string.register_confirm_password)) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true,
@@ -89,22 +90,22 @@ fun RegisterScreen(
 
         Button(
             onClick = {
-                val cleanEmail = email.trim()
+                val cleanEmail = normalizeEmail(email)
                 val cleanPassword = password.trim()
                 val cleanConfirmPassword = confirmPassword.trim()
 
                 if (cleanEmail.isEmpty() || cleanPassword.isEmpty() || cleanConfirmPassword.isEmpty()) {
-                    errorMessage = "Por favor completa todos los campos"
+                    errorMessage = context.getString(R.string.register_complete_fields)
                     return@Button
                 }
 
                 if (cleanPassword != cleanConfirmPassword) {
-                    errorMessage = "Las contraseñas no coinciden"
+                    errorMessage = context.getString(R.string.register_password_mismatch)
                     return@Button
                 }
 
                 if (cleanPassword.length < 6) {
-                    errorMessage = "La contraseña debe tener al menos 6 caracteres"
+                    errorMessage = context.getString(R.string.register_password_minimum)
                     return@Button
                 }
 
@@ -116,20 +117,19 @@ fun RegisterScreen(
                         if (task.isSuccessful) {
 
                             val user = auth.currentUser
-
-                            // (Actividad 6)
-                            user?.uid?.let { uid ->
-                                saveUserRole(uid = uid, email = cleanEmail, role = UserRole.USUARIO)
+                            if (user == null) {
+                                errorMessage = context.getString(R.string.register_user_missing)
+                                return@addOnCompleteListener
                             }
 
-                            user?.sendEmailVerification()
-                                ?.addOnCompleteListener { verificationTask ->
+                            user.sendEmailVerification()
+                                .addOnCompleteListener { verificationTask ->
 
                                     if (verificationTask.isSuccessful) {
 
                                         Toast.makeText(
                                             context,
-                                            "Cuenta creada. Revisa tu correo para verificarla.",
+                                            context.getString(R.string.register_success),
                                             Toast.LENGTH_LONG
                                         ).show()
 
@@ -139,12 +139,13 @@ fun RegisterScreen(
 
                                         errorMessage =
                                             verificationTask.exception?.localizedMessage
-                                                ?: "No se pudo enviar el correo de verificación"
+                                                ?: context.getString(R.string.register_verification_error)
                                     }
                                 }
 
                         } else {
-                            errorMessage = task.exception?.localizedMessage ?: "Error al registrar usuario"
+                            errorMessage = task.exception?.localizedMessage
+                                ?: context.getString(R.string.register_error)
                         }
                     }
             },
@@ -159,14 +160,14 @@ fun RegisterScreen(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
-                Text("Registrarse")
+                Text(stringResource(R.string.register_button))
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(onClick = onNavigateToLogin) {
-            Text("¿Ya tienes cuenta? Inicia sesión")
+            Text(stringResource(R.string.register_login_link))
         }
     }
 }

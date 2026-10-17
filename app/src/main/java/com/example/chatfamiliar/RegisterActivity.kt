@@ -37,7 +37,7 @@ class RegisterActivity : ComponentActivity() {
 
                             val intent = Intent(
                                 this,
-                                LoginAcyivity::class.java
+                                LoginActivity::class.java
                             )
 
                             startActivity(intent)
@@ -49,7 +49,7 @@ class RegisterActivity : ComponentActivity() {
 
                             val intent = Intent(
                                 this,
-                                LoginAcyivity::class.java
+                                LoginActivity::class.java
                             )
 
                             startActivity(intent)
