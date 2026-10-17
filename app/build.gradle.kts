@@ -1,9 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services") // Agregado para Firebase
 }
+
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").inputStream().use { load(it) }
+}
+val agoraAppId = localProperties.getProperty("AGORA_APP_ID")
+    ?: throw GradleException("AGORA_APP_ID must be defined in local.properties")
+val agoraTempToken = localProperties.getProperty("AGORA_TEMP_TOKEN", "")
 
 android {
     namespace = "com.example.chatfamiliar"
@@ -17,6 +26,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "AGORA_APP_ID", "\"$agoraAppId\"")
+        buildConfigField("String", "AGORA_TEMP_TOKEN", "\"$agoraTempToken\"")
     }
 
     buildTypes {
@@ -37,6 +48,7 @@ android {
     }
     buildFeatures {
         compose = true // Mantener Compose habilitado
+        buildConfig = true
     }
 }
 
@@ -67,5 +79,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("io.agora.rtc:full-sdk:4.3.0")
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
 }

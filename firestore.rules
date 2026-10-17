@@ -1,0 +1,190 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verifiedUser() {
+      return request.auth != null
+        && request.auth.token.email_verified == true;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function familyPath(familyId) {
+      return /databases/$(database)/documents/families/$(familyId);
+    }
+
+    function isFamilyMember(familyId) {
+      return verifiedUser()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.familyId == familyId;
+    }
+
+    function isFamilyAdmin(familyId) {
+      return isFamilyMember(familyId)
+        && get(userPath(request.auth.uid)).data.role == 'ADMIN';
+    }
+
+    function validUserProfile(data) {
+      return data.keys().hasAll(['email', 'displayName', 'familyId', 'role'])
+        && data.keys().hasOnly(['email', 'displayName', 'familyId', 'role'])
+        && data.email is string
+        && data.displayName is string
+        && (data.familyId == null || data.familyId is string)
+        && data.role in ['ADMIN', 'USUARIO'];
+    }
+
+    function createsOwnFamily(familyId) {
+      let family = getAfter(familyPath(familyId)).data;
+      return family.createdBy == request.auth.uid
+        && family.inviteCode.matches('^[A-Z0-9]{6}$');
+    }
+
+    function joinsFamily(familyId) {
+      return familyId is string
+        && exists(familyPath(familyId))
+        && get(familyPath(familyId)).data.inviteCode.matches('^[A-Z0-9]{6}$');
+    }
+
+    match /users/{uid} {
+      allow get, list: if verifiedUser()
+        && (
+          request.auth.uid == uid
+          || (
+            resource.data.familyId is string
+            && isFamilyMember(resource.data.familyId)
+          )
+        );
+
+      allow create: if verifiedUser()
+        && request.auth.uid == uid
+        && validUserProfile(request.resource.data)
+        && (
+          (
+            request.resource.data.role == 'USUARIO'
+            && request.resource.data.familyId == null
+          )
+          || (
+            request.resource.data.role == 'USUARIO'
+            && joinsFamily(request.resource.data.familyId)
+          )
+          || (
+            request.resource.data.role == 'ADMIN'
+            && request.resource.data.familyId is string
+            && createsOwnFamily(request.resource.data.familyId)
+          )
+        );
+
+      allow update: if verifiedUser()
+        && validUserProfile(request.resource.data)
+        && (
+          (
+            request.auth.uid == uid
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.familyId == resource.data.familyId
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['email', 'displayName'])
+          )
+          || (
+            request.auth.uid == uid
+            && resource.data.familyId == null
+            && resource.data.role == 'USUARIO'
+            && request.resource.data.role == 'USUARIO'
+            && joinsFamily(request.resource.data.familyId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasAll(['familyId', 'role'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['familyId', 'role'])
+          )
+          || (
+            request.auth.uid == uid
+            && resource.data.familyId == null
+            && resource.data.role == 'USUARIO'
+            && request.resource.data.role == 'ADMIN'
+            && request.resource.data.familyId is string
+            && createsOwnFamily(request.resource.data.familyId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasAll(['familyId', 'role'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['familyId', 'role'])
+          )
+          || (
+            request.auth.uid != uid
+            && resource.data.familyId is string
+            && isFamilyAdmin(resource.data.familyId)
+            && request.resource.data.familyId == resource.data.familyId
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasAll(['role'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['role'])
+            && request.resource.data.role in ['ADMIN', 'USUARIO']
+          )
+        );
+
+      allow delete: if false;
+    }
+
+    match /families/{familyId} {
+      allow get: if isFamilyMember(familyId);
+      // Invite lookup queries must include limit(1); get rules still protect direct reads.
+      allow list: if verifiedUser()
+        && request.query.limit == 1
+        && resource.data.inviteCode is string;
+
+      allow create: if verifiedUser()
+        && request.resource.data.keys().hasAll([
+          'name', 'inviteCode', 'createdBy', 'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'name', 'inviteCode', 'createdBy', 'createdAt'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.inviteCode.matches('^[A-Z0-9]{6}$')
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && getAfter(userPath(request.auth.uid)).data.familyId == familyId
+        && getAfter(userPath(request.auth.uid)).data.role == 'ADMIN';
+
+      allow update: if verifiedUser()
+        && isFamilyAdmin(familyId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0;
+
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow get, list: if isFamilyMember(familyId);
+
+        allow create: if isFamilyMember(familyId)
+          && request.resource.data.keys().hasAll([
+            'text', 'senderId', 'senderName', 'timestamp'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'text', 'senderId', 'senderName', 'timestamp'
+          ])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.senderName is string
+          && request.resource.data.timestamp == request.time;
+
+        allow update: if isFamilyMember(familyId)
+          && resource.data.senderId == request.auth.uid
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.keys().hasOnly([
+            'text', 'senderId', 'senderName', 'timestamp'
+          ])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.timestamp == resource.data.timestamp;
+
+        allow delete: if isFamilyMember(familyId)
+          && resource.data.senderId == request.auth.uid;
+      }
+    }
+  }
+}

@@ -9,11 +9,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import android.widget.TextView
+import com.google.firebase.firestore.FirebaseFirestoreException
+import kotlinx.coroutines.launch
 
 
-class LoginAcyivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
 
@@ -62,7 +65,7 @@ class LoginAcyivity : AppCompatActivity() {
         // Botón iniciar sesión
         loginButton.setOnClickListener {
 
-            val email = emailEditText.text.toString().trim()
+            val email = normalizeEmail(emailEditText.text.toString())
             val password = passwordEditText.text.toString().trim()
 
             // Validar campos vacíos
@@ -70,7 +73,7 @@ class LoginAcyivity : AppCompatActivity() {
 
                 Toast.makeText(
                     this,
-                    "Completa todos los campos",
+                    getString(R.string.login_complete_fields),
                     Toast.LENGTH_SHORT
                 ).show()
 
@@ -88,25 +91,35 @@ class LoginAcyivity : AppCompatActivity() {
                         // Actividad 3:
                         // comprobar si el correo ya fue verificado
                         if (user != null && user.isEmailVerified) {
-
-                            Toast.makeText(
-                                this,
-                                "Inicio de sesión exitoso",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                            // Ir a MainActivity
-                            val intent = Intent(this, MainActivity::class.java)
-                            startActivity(intent)
-
-                            // Evita volver al Login con el botón atrás
-                            finish()
+                            loginButton.isEnabled = false
+                            lifecycleScope.launch {
+                                try {
+                                    FamilyRepository(auth).ensureCurrentUserProfile()
+                                    Toast.makeText(
+                                        this@LoginActivity,
+                                        getString(R.string.login_success),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    startActivity(
+                                        Intent(this@LoginActivity, MainActivity::class.java)
+                                    )
+                                    finish()
+                                } catch (exception: FirebaseFirestoreException) {
+                                    loginButton.isEnabled = true
+                                    Toast.makeText(
+                                        this@LoginActivity,
+                                        exception.localizedMessage
+                                            ?: getString(R.string.main_profile_load_error),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
 
                         } else {
                             auth.signOut() // <-- Cierra la sesión activa no verificada
                             Toast.makeText(
                                 this,
-                                "Debes verificar tu correo electrónico antes de iniciar sesión",
+                                getString(R.string.login_verify_email),
                                 Toast.LENGTH_LONG
                             ).show()
                         }
@@ -116,7 +129,7 @@ class LoginAcyivity : AppCompatActivity() {
                         Toast.makeText(
                             this,
                             task.exception?.localizedMessage
-                                ?: "Error al iniciar sesión",
+                                ?: getString(R.string.login_error),
                             Toast.LENGTH_LONG
                         ).show()
                     }
