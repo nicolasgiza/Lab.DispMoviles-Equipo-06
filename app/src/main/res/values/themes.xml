@@ -2,4 +2,5 @@
 <resources>
 
     <style name="Theme.ChatFamiliar" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.ChatFamiliar.AppCompat" parent="Theme.AppCompat.Light.NoActionBar" />
 </resources>

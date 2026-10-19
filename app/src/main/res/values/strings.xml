@@ -54,6 +54,8 @@
     <string name="video_error_channel">No se pudo entrar al canal de la familia (código %1$d).</string>
     <string name="video_error_create_engine">No se pudo iniciar Agora: %1$s</string>
     <string name="video_error_app_id">No se pudo iniciar Agora. Revisa el App ID y vuelve a intentarlo.</string>
+    <string name="video_error_missing_app_id">Falta configurar AGORA_APP_ID en local.properties</string>
+    <string name="video_error_token_invalid">El token de Agora venció o no coincide con el canal. Genera uno nuevo y vuelve a compilar.</string>
     <string name="video_connecting">Conectando a la videollamada…</string>
     <string name="unknown_error">error desconocido</string>
     <string name="video_mute">Silenciar micrófono</string>

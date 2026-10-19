@@ -8,11 +8,20 @@ plugins {
 }
 
 val localProperties = Properties().apply {
-    rootProject.file("local.properties").inputStream().use { load(it) }
+    val propertiesFile = rootProject.file("local.properties")
+    if (propertiesFile.isFile) {
+        propertiesFile.inputStream().use { load(it) }
+    }
 }
-val agoraAppId = localProperties.getProperty("AGORA_APP_ID")
-    ?: throw GradleException("AGORA_APP_ID must be defined in local.properties")
+val agoraAppId = localProperties.getProperty("AGORA_APP_ID", "")
 val agoraTempToken = localProperties.getProperty("AGORA_TEMP_TOKEN", "")
+
+if (agoraAppId.isBlank()) {
+    logger.warn("AGORA_APP_ID falta en local.properties.")
+}
+if (agoraTempToken.isBlank()) {
+    logger.warn("AGORA_TEMP_TOKEN falta en local.properties.")
+}
 
 android {
     namespace = "com.example.chatfamiliar"
