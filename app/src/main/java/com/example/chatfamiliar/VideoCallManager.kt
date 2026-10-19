@@ -98,7 +98,11 @@ fun VideoCallScreen(
                     },
                     onError = { code ->
                         mainHandler.post {
-                            callError = context.getString(R.string.video_error_agora, code)
+                            callError = if (code == 109 || code == 110) {
+                                context.getString(R.string.video_error_token_invalid)
+                            } else {
+                                context.getString(R.string.video_error_agora, code)
+                            }
                         }
                     },
                     onEngineCreationError = { message ->
@@ -135,7 +139,7 @@ fun VideoCallScreen(
                     engine.enableAudio()
                     engine.startPreview()
                     // TODO: Generate a production token on a server for each channel.
-                    val token = BuildConfig.AGORA_TEMP_TOKEN.takeIf { it.isNotEmpty() }
+                    val token = BuildConfig.AGORA_TEMP_TOKEN.takeIf { it.isNotBlank() }
                     val options = ChannelMediaOptions().apply {
                         clientRoleType = Constants.CLIENT_ROLE_BROADCASTER
                         autoSubscribeAudio = true
@@ -164,7 +168,9 @@ fun VideoCallScreen(
     }
 
     LaunchedEffect(channelName) {
-        if (!permissionRequestStarted) {
+        if (BuildConfig.AGORA_APP_ID.isBlank()) {
+            callError = context.getString(R.string.video_error_missing_app_id)
+        } else if (!permissionRequestStarted) {
             permissionRequestStarted = true
             val permissions = buildList {
                 add(Manifest.permission.CAMERA)

@@ -54,6 +54,8 @@
     <string name="video_error_channel">Could not join the family channel (code %1$d).</string>
     <string name="video_error_create_engine">Could not start Agora: %1$s</string>
     <string name="video_error_app_id">Could not start Agora. Check the App ID and try again.</string>
+    <string name="video_error_missing_app_id">AGORA_APP_ID is missing from local.properties</string>
+    <string name="video_error_token_invalid">The Agora token expired or does not match the channel. Generate a new one and rebuild.</string>
     <string name="video_connecting">Connecting to the video call…</string>
     <string name="unknown_error">unknown error</string>
     <string name="video_mute">Mute microphone</string>
